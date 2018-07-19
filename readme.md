@@ -14,13 +14,13 @@ capavailable = 有效容量(萬立方公尺)
 caplevel = 水位(公尺)   
 currcap = 有效蓄水量(萬立方公尺)  
 currcapper = 蓄水量百分比(%)  
-statisticTimeS = 統計時間(起)		
-statisticTimeE = 統計時間(迄)		
-rainFall = 降雨量(毫米)		
-inFlow = 進水量		
-outFlow = 出水量		
-waterlevediff = 與昨日水位差(公尺)		
-recordTime = 水情時間		
+statisticTimeS = 統計時間(起)  
+statisticTimeE = 統計時間(迄)  
+rainFall = 降雨量(毫米)  
+inFlow = 進水量  
+outFlow = 出水量  
+waterlevediff = 與昨日水位差(公尺)  
+recordTime = 水情時間  
 
 ## Result Preview
 ```
