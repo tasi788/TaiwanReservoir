@@ -13,7 +13,7 @@ from pyquery import PyQuery as pq
 https://data.gov.tw/dataset/32726
 ========
 [區域{
- 每日蓄水統計{
+每日蓄水統計{
 name = 水庫名稱
 capavailable = 有效容量(萬立方公尺)
 statisticTime = 統計時間
@@ -84,18 +84,3 @@ class reservoir():
 			return dataList
 		elif type == 'dict':
 			return dataDict
-	def getAreaCate(self, area=None):
-		tmplist, tmpdict = [], {}
-		area = self.loadParse()
-		getData = self.getData()
-		#areaEn = ['north', 'middle', 'south', 'ffshoreIsland']
-		#areaZh = ['台灣北區', '台灣中區', '台灣南區', '澎湖地區']
-		areaZhtZh = {
-			'台灣北區': 'north',
-			'台灣中區': 'middle',
-			'台灣南區': 'south',
-			'澎湖地區': 'offshoreIsland'
-		}
-		for x in getData:
-			tmplist[areaZhtZh[x['name']]].append(x)
-		print(tmplist)
