@@ -4,19 +4,35 @@ import json
 import codecs
 import pprint
 import requests
-from itertools import zip_longest as zip
 from time import strftime
+from itertools import zip_longest as zip
 from pyquery import PyQuery as pq
 
 '''
 水庫資料
 https://data.gov.tw/dataset/32726
+========
+[區域{
+ 每日蓄水統計{
+name = 水庫名稱
+capavailable = 有效容量(萬立方公尺)
+statisticTime = 統計時間
+rainFall = 降雨量(毫米)
+inFlow = 進水量
+outFlow = 出水量
+waterlevediff = 與昨日水位差(公尺)
+ }
+即時水情資料{
+recordTime = 水情時間
+caplevel = 水位(公尺)
+currcap = 有效蓄水量(萬立方公尺)
+currcapper = 蓄水量百分比(%)
+}
+}]
+
 '''
 
-ros = reservoir()
-b = ros.getData('???')
-pp(b)
-class reservoir:
+class reservoir():
 	def __init__(self):
 		self.url = 'http://fhy.wra.gov.tw/ReservoirPage_2011/StorageCapacity.aspx'
 		try:
@@ -83,24 +99,3 @@ class reservoir:
 		for x in getData:
 			tmplist[areaZhtZh[x['name']]].append(x)
 		print(tmplist)
-
-
-'''
-[區域{
- 每日蓄水統計{
-name = 水庫名稱
-capavailable = 有效容量(萬立方公尺)
-statisticTime = 統計時間
-rainFall = 降雨量(毫米)
-inFlow = 進水量
-outFlow = 出水量
-waterlevediff = 與昨日水位差(公尺)
- }
-即時水情資料{
-recordTime = 水情時間
-caplevel = 水位(公尺)
-currcap = 有效蓄水量(萬立方公尺)
-currcapper = 蓄水量百分比(%)
-}
-}]
-'''
