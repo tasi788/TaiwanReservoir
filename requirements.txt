@@ -4,5 +4,5 @@ cssselect==1.0.3
 idna==2.7
 lxml==4.2.3
 pyquery==1.4.0
-requests==2.19.1
+requests==2.20.0
 urllib3==1.23
