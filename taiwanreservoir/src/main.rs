@@ -34,6 +34,14 @@ trait ReservoirTrait {
     }
 }
 
+impl Reservoir { }
+
+impl ReservoirTrait for Reservoir {
+    fn get_asp(&self) -> ASP {
+        reqwest::get(self.url()).unwrap().text().unwrap();
+    }
+}
+
 fn main() {
     println!("Hello, world!");
 }
