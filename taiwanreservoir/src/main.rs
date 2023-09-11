@@ -26,6 +26,12 @@ struct ASP {
 trait ReservoirTrait {
     fn get_asp(&self) -> ASP;
     fn get_realtime(&self) -> Reservoir;
+    fn get_history(&self) -> Vec<Reservoir>;
+
+
+    fn url(&self) -> String {
+        String::from("http://fhy.wra.gov.tw/ReservoirPage_2011/StorageCapacity.aspx")
+    }
 }
 
 fn main() {
