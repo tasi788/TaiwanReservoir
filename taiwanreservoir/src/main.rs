@@ -41,7 +41,7 @@ trait ReservoirTrait {
     }
 
     fn url(&self) -> String {
-        String::from("http://fhy.wra.gov.tw/ReservoirPage_2011/StorageCapacity.aspx")
+        String::from("https://fhy.wra.gov.tw/ReservoirPage_2011/StorageCapacity.aspx")
     }
 }
 
@@ -50,27 +50,21 @@ impl Reservoir { }
 impl ReservoirTrait for Reservoir {
     fn get_asp(&self) -> Result<ASP, reqwest::Error>{
         let result = self.client().get(self.url()).send();
-        match result {
-            Ok(resp) => {
-                println!("{:?}", resp.text());
-            }
-            Err(e) => {
-                println!("{:?}", e);
-            }
-        }
 
-
-        // let data = self.client().get("https://httpbin.org/user-agent").send()?.text().unwrap();
-
-        // let document = Html::parse_document(&data);
-        // let selector = Selector::parse(r#"input#__VIEWSTATE"#).unwrap();
-        // let viewstate = document.select(&selector).next().unwrap().value().attr("value").unwrap();
+        let document = Html::parse_document(&result?.text()?);
+        let selector = Selector::parse(r#"input#__VIEWSTATE"#).unwrap();
+        let viewstate = document.select(&selector)
+            .next()
+            .and_then(|e| e.value().attr("value"))
+            .unwrap_or_else(|| panic!("no value attribute"));
+        // let viewstate = document.select(&selector).next()?.value().attr("value")?;
+        println!("{:?}", viewstate);
         Ok(
             ASP {
             eventtarget: String::from(""),
             eventargument: String::from(""),
             lastfocus: String::from(""),
-            viewstate: String::from("viewstate"),
+            viewstate: String::from(viewstate),
             viewstategenerator: String::from(""),
         })
 
