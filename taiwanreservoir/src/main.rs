@@ -52,20 +52,24 @@ impl ReservoirTrait for Reservoir {
         let result = self.client().get(self.url()).send();
 
         let document = Html::parse_document(&result?.text()?);
-        let selector = Selector::parse(r#"input#__VIEWSTATE"#).unwrap();
-        let viewstate = document.select(&selector)
+        // let viewstate_s = Selector::parse(r#"input#__VIEWSTATE"#).unwrap();
+        let viewstate = document.select(&Selector::parse(r#"input#__VIEWSTATE"#).unwrap())
             .next()
             .and_then(|e| e.value().attr("value"))
-            .unwrap_or_else(|| panic!("no value attribute"));
+            .unwrap();
+        let viewstategenerator = document.select(&Selector::parse(r#"input#__VIEWSTATEGENERATOR"#).unwrap())
+            .next()
+            .and_then(|e| e.value().attr("value"))
+            .unwrap();
         // let viewstate = document.select(&selector).next()?.value().attr("value")?;
         println!("{:?}", viewstate);
         Ok(
             ASP {
-            eventtarget: String::from(""),
+            eventtarget: String::from("ctl00$cphMain$cboSearch"),
             eventargument: String::from(""),
             lastfocus: String::from(""),
             viewstate: String::from(viewstate),
-            viewstategenerator: String::from(""),
+            viewstategenerator: String::from(viewstategenerator),
         })
 
         // match reqwest::blocking::get(self.url()) {
