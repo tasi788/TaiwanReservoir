@@ -11,20 +11,7 @@ use serde_json;
 
 
 // struct Reservoir {}
-struct ReservoirData {
-    name: String,
-    cap_available: f64,
-    statistic_time_start: i32,
-    statistic_time_end: i32,
-    rain_fall: f64,
-    inflow: f64,
-    outflow: f64,
-    water_level_diff: f64,
-    record_time: i32,
-    cap_level: f64,
-    current_cap: f64,
-    current_cap_percent: f64,
-}
+
 
 #[derive(Serialize, Deserialize, Debug)]
 struct ASP {
@@ -120,13 +107,27 @@ impl ReservoirTrait for lib::Reservoir {
 
     fn parse_to(&self, html: &str) {
         let document = Html::parse_document(html);
-        let table_selector = Selector::parse(r#"table#ctl00_cphMain_gvList.list.nowrap tr"#).unwrap();
-        let table = document.select(&table_selector);
-        for x in table[2..] { //  for x in table[2..]
-            let mut a: Vec<_> = x.text().collect();
-            a.retain(|&x| x != "");
-
-            println!("{:?}", a);
+        let table_selector = Selector::parse(r#"table#ctl00_cphMain_gvList.list.nowrap tr:nth-child(n+3):not(:last-child)"#).unwrap();
+        let table = document.select(&table_selector).into_iter();
+        for x in table { //  for x in table[2..]
+            let mut row: Vec<_> = x.text().collect();
+            row.retain(|&x| x != "\n\t\t\t");
+            println!("{:?}", row);
+            let d = lib::ReservoirData{
+                name: row[0].to_string(),
+                cap_available: 0.0,
+                statistic_time_start: 0,
+                statistic_time_end: 0,
+                rain_fall: 0.0,
+                inflow: 0.0,
+                outflow: 0.0,
+                water_level_diff: 0.0,
+                record_time: 0,
+                cap_level: 0.0,
+                current_cap: 0.0,
+                current_cap_percent: 0.0,
+            };
+            println!("{:?}", d)
         }
         // println!("{:?}", table.inner_html());
 
