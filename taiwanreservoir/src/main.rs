@@ -1,8 +1,16 @@
-use std::time::Duration;
 use reqwest;
 use scraper::{Html, Selector};
+use serde::{Deserialize, Serialize};
+use std::collections::HashMap;
+use std::time::Duration;
+use taiwanreservoir as lib;
+use chrono::prelude::*;
+use chrono::offset::LocalResult;
+use chrono_tz::Asia::Taipei;
+use serde_json;
 
-struct Reservoir {}
+
+// struct Reservoir {}
 struct ReservoirData {
     name: String,
     cap_available: f64,
@@ -18,18 +26,57 @@ struct ReservoirData {
     current_cap_percent: f64,
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 struct ASP {
+    #[serde(rename = "__EVENTTARGET")]
     eventtarget: String,
+    #[serde(rename = "__EVENTARGUMENT")]
     eventargument: String,
+    #[serde(rename = "__LASTFOCUS")]
     lastfocus: String,
+    #[serde(rename = "__VIEWSTATE")]
     viewstate: String,
+    #[serde(rename = "__VIEWSTATEGENERATOR")]
     viewstategenerator: String,
+    #[serde(rename = "ctl00$cphMain$ucDate$cboYear")]
+    cboyear: String,
+    #[serde(rename = "ctl00$cphMain$ucDate$cboMonth")]
+    cbomonth: String,
+    #[serde(rename = "ctl00$cphMain$ucDate$cboDay")]
+    cboday: String,
+    #[serde(rename = "ctl00$cphMain$cboSearch")]
+    cbosearch: String,
+    #[serde(rename = "__ASYNCPOST")]
+    asyncpost: bool,
+    #[serde(rename = "ctl00$ctl02")]
+    ctl02: String,
+    #[serde(rename = "input#ctl00_ctl02_HiddenField")]
+    hiddenfield: String,
+}
+
+impl ASP {
+    fn new(viewstate: &str, viewstategenerator: &str, hiddenfield: &str) -> ASP {
+        ASP {
+            eventtarget: String::from("ctl00$cphMain$cboSearch"),
+            eventargument: String::from(""),
+            lastfocus: String::from(""),
+            viewstate: String::from(viewstate),
+            viewstategenerator: String::from(viewstategenerator),
+            cboyear: String::from(""),
+            cbomonth: String::from(""),
+            cboday: String::from(""),
+            cbosearch: String::from(""),
+            asyncpost: true,
+            ctl02: String::from("ctl00$cphMain$ctl00|ctl00$cphMain$cboSearch"),
+            hiddenfield: String::from(hiddenfield),
+        }
+    }
 }
 
 trait ReservoirTrait {
     fn get_asp(&self) -> Result<ASP, reqwest::Error>;
-    fn get_realtime(&self) -> Reservoir;
-    fn get_history(&self) -> Vec<Reservoir>;
+    fn get_realtime(&self);
+    fn get_history(&self) -> Vec<lib::Reservoir>;
 
     fn client(&self) -> reqwest::blocking::Client {
         // reqwest::blocking::Client::new()
@@ -43,62 +90,73 @@ trait ReservoirTrait {
     fn url(&self) -> String {
         String::from("https://fhy.wra.gov.tw/ReservoirPage_2011/StorageCapacity.aspx")
     }
+    fn parse_to(&self, html: &str);
 }
 
-impl Reservoir { }
-
-impl ReservoirTrait for Reservoir {
-    fn get_asp(&self) -> Result<ASP, reqwest::Error>{
+impl ReservoirTrait for lib::Reservoir {
+    fn get_asp(&self) -> Result<ASP, reqwest::Error> {
         let result = self.client().get(self.url()).send();
 
         let document = Html::parse_document(&result?.text()?);
         // let viewstate_s = Selector::parse(r#"input#__VIEWSTATE"#).unwrap();
-        let viewstate = document.select(&Selector::parse(r#"input#__VIEWSTATE"#).unwrap())
+        let viewstate = document
+            .select(&Selector::parse(r#"input#__VIEWSTATE"#).unwrap())
             .next()
             .and_then(|e| e.value().attr("value"))
             .unwrap();
-        let viewstategenerator = document.select(&Selector::parse(r#"input#__VIEWSTATEGENERATOR"#).unwrap())
+        let viewstategenerator = document
+            .select(&Selector::parse(r#"input#__VIEWSTATEGENERATOR"#).unwrap())
             .next()
             .and_then(|e| e.value().attr("value"))
             .unwrap();
-        // let viewstate = document.select(&selector).next()?.value().attr("value")?;
-        println!("{:?}", viewstate);
-        Ok(
-            ASP {
-            eventtarget: String::from("ctl00$cphMain$cboSearch"),
-            eventargument: String::from(""),
-            lastfocus: String::from(""),
-            viewstate: String::from(viewstate),
-            viewstategenerator: String::from(viewstategenerator),
-        })
-
-        // match reqwest::blocking::get(self.url()) {
-        //     Ok(resp) => {
-        //         let document = Html::parse_document(&resp.text().unwrap());
-        //         let selector = Selector::parse(r#"input#__VIEWSTATE"#).unwrap();
-        //         let input = document.select(&selector).next().unwrap();
-        //         println!("{:?}", input.value().attr("value"));
-        //     }
-        //     Err(e) => {
-        //         println!("{:?}", e);
-        //         // panic!("error")
-        //     }
-        // }
-
-
+        let hiddenfield = document
+            .select(&Selector::parse(r#"input#ctl00_ctl02_HiddenField"#).unwrap())
+            .next()
+            .and_then(|e| e.value().attr("value"))
+            .unwrap();
+        Ok(ASP::new(viewstate, viewstategenerator, hiddenfield))
 
     }
 
-    fn get_realtime(&self) -> Reservoir {
-        todo!()
+    fn parse_to(&self, html: &str) {
+        let document = Html::parse_document(html);
+        let table_selector = Selector::parse(r#"table#ctl00_cphMain_gvList.list.nowrap tr"#).unwrap();
+        let table = document.select(&table_selector);
+        for x in table[2..] { //  for x in table[2..]
+            let mut a: Vec<_> = x.text().collect();
+            a.retain(|&x| x != "");
+
+            println!("{:?}", a);
+        }
+        // println!("{:?}", table.inner_html());
+
+    }
+    fn get_realtime(&self) {
+        let mut asp = self.get_asp().unwrap();
+        // 轉換為台北時區
+        let now = Utc::now().with_timezone(&Taipei);
+        asp.cboday = now.day().to_string();
+        asp.cbomonth = now.month().to_string();
+        asp.cboyear = now.year().to_string();
+        let json_ = serde_json::to_value(&asp).unwrap();
+        let mut params: HashMap<String, serde_json::Value> = serde_json::from_value(json_).unwrap();
+        let result = self.client().post(self.url())
+            .form(&params)
+            .send()
+            .unwrap()
+            .text()
+            .unwrap();
+        return self.parse_to(&result);
     }
 
-    fn get_history(&self) -> Vec<Reservoir> {
+    fn get_history(&self) -> Vec<lib::Reservoir> {
         todo!()
     }
 }
 
 fn main() {
-    let c = Reservoir {};
-    c.get_asp().expect("發生錯誤");
+    let c = lib::Reservoir {};
+    // let result = c.get_asp().expect("發生錯誤");
+    let result = c.get_realtime();
+    // println!("{:?}", result);
 }
